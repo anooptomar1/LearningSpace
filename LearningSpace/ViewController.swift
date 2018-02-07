@@ -16,10 +16,14 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     @IBOutlet weak var blurView: UIVisualEffectView!
     
     // reference nodes for coordinate system
-    var referenceNodes = [SCNNode]()
+    var referenceNodes = [ReferenceType: ReferenceNode]()
+    let neededReferences: [ReferenceType] = [.wall1point1, .wall1point2, .wall2point1, .wall3point1, .wall4point1]
     
     // Planes
     var planes = [UUID: Plane]()
+    
+    // Detected image anchors; need to track so we can reset when floor is detected
+    var imageAnchors = [ARImageAnchor]()
     
     // floorPlane
     var floorPlane: Plane?
@@ -84,21 +88,25 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             fatalError("Missing expected asset catalog resources.")
         }
         
+        self.imageAnchors.removeAll()
+        self.floorPlane = nil
+        self.referenceNodes.removeAll()
+
         let configuration = ARWorldTrackingConfiguration()
         configuration.detectionImages = referenceImages
         configuration.worldAlignment = .gravityAndHeading
         configuration.planeDetection = .horizontal
         session.run(configuration, options: [.resetTracking, .removeExistingAnchors])
-        
-        self.referenceNodes.removeAll()
 	}
-
+    
     // MARK: - ARSCNViewDelegate (Image detection results)
     /// - Tag: ARImageAnchor-Visualizing
     func renderer(_ renderer: SCNSceneRenderer, didAdd node: SCNNode, for anchor: ARAnchor) {
         switch anchor {
         case let imageAnchor as ARImageAnchor:
-            referenceImageDetected(node: node, anchor: imageAnchor)
+            if let scene = renderer.scene {
+                referenceImageDetected(node: node, anchor: imageAnchor, scene: scene)
+            }
         case let planeAnchor as ARPlaneAnchor:
             planeDetected(node: node, planeAnchor: planeAnchor)
         default:
@@ -109,25 +117,47 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     func renderer(_ renderer: SCNSceneRenderer, didUpdate node: SCNNode, for anchor: ARAnchor) {
         guard let plane = planes[anchor.identifier] else { return }
         
-        plane.update(anchor: anchor as! ARPlaneAnchor)
-        print("Plane area = \(plane.area())")
+        guard let anchor = anchor as? ARPlaneAnchor else { return }
+        
+        plane.update(anchor: anchor)
         
         if floorPlane == nil && plane.area() >= minFloorSize {
             DispatchQueue.main.async {
                 self.statusViewController.showMessage("Floor detected. Look around to detect images");
             }
+            // Clear any detected image anchors
+            for (anchor) in imageAnchors {
+                self.session.remove(anchor: anchor)
+            }
             floorPlane = plane
+        }
+        
+        if let floorPlane = floorPlane, floorPlane.anchor.identifier == anchor.identifier {
+            for (_, referenceNode) in referenceNodes {
+                referenceNode.adjustOntoPlaneAnchor(anchor, using: node)
+            }
         }
     }
     
+    func renderer(_ renderer: SCNSceneRenderer, didRemove node: SCNNode, for anchor: ARAnchor) {
+        if floorPlane?.anchor.identifier == anchor.identifier {
+            floorPlane = nil
+            DispatchQueue.main.async {
+                self.statusViewController.showMessage("Lost floor plane. Resetting...");
+                self.resetTracking()
+            }
+        }
+        planes.removeValue(forKey: anchor.identifier)
+    }
+    
     func planeDetected(node: SCNNode, planeAnchor: ARPlaneAnchor) {
+        print("Plane detected: \(planeAnchor)")
         let plane = Plane(anchor: planeAnchor)
         planes[planeAnchor.identifier] = plane
         node.addChildNode(plane)
     }
     
-    func referenceImageDetected(node: SCNNode, anchor: ARImageAnchor) {
-        let referenceImage = anchor.referenceImage
+    func startImageHighlight(node: SCNNode, referenceImage: ARReferenceImage) {
         updateQueue.async {
             
             // Create a plane to visualize the initial position of the detected image.
@@ -151,34 +181,46 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             
             // Add the plane visualization to the scene.
             node.addChildNode(planeNode)
-            
-            // Add a sphere in the center
-            let sphere = SCNSphere(radius: 0.025)
-            let sphereNode = SCNNode(geometry: sphere)
-            sphere.firstMaterial?.diffuse.contents = UIColor(red: 30.0 / 255.0, green: 150.0 / 255.0, blue: 30.0 / 255.0, alpha: 1)
-            node.addChildNode(sphereNode)
-            
-            self.referenceNodes.append(sphereNode)
-            
-            if self.referenceNodes.count == 2 {
-                let distanceVector = self.referenceNodes[0].presentation.worldPosition - self.referenceNodes[1].presentation.worldPosition
-                let distance = distanceVector.length()
-                let referenceEdge = SCNCylinder(radius: 0.01, height: distance)
-                let referenceEdgeNode = SCNNode(geometry: referenceEdge)
-                
-                print("rotation = \(referenceEdgeNode.rotation)")
-                let rad = atan2(distanceVector.y, distanceVector.x)
-                referenceEdgeNode.eulerAngles.z = rad
-                referenceEdgeNode.eulerAngles.x = -.pi / 2
-                node.addChildNode(referenceEdgeNode)
+        }
+    }
+    
+    func referenceImageDetected(node: SCNNode, anchor: ARImageAnchor, scene: SCNScene) {
+        imageAnchors.append(anchor)
+        
+        guard let floorPlane = floorPlane else { return }
+        
+        startImageHighlight(node: node, referenceImage: anchor.referenceImage)
+        
+        if let referenceType = neededReferences.first(where: { referenceNodes[$0] == nil } ) {
+            print("Adding reference image \(String(describing: anchor.referenceImage.name)) for \(referenceType)")
+            updateQueue.async {
+                let referenceNode = ReferenceNode(anchor: anchor, referenceType: referenceType, referenceImage: anchor.referenceImage)
+                referenceNode.position = node.worldPosition
+                self.referenceNodes[referenceType] = referenceNode
+                scene.rootNode.addChildNode(referenceNode)
+                referenceNode.adjustOntoPlaneAnchor(floorPlane.anchor, using: floorPlane)
             }
+            DispatchQueue.main.async {
+                let imageName = anchor.referenceImage.name ?? ""
+                self.statusViewController.cancelAllScheduledMessages()
+                self.statusViewController.showMessage("Detected image “\(imageName)”")
+            }
+
+//            if self.referenceNodes.count == 2 {
+//                let distanceVector = self.referenceNodes[0].presentation.worldPosition - self.referenceNodes[1].presentation.worldPosition
+//                let distance = distanceVector.length()
+//                let referenceEdge = SCNCylinder(radius: 0.01, height: distance)
+//                let referenceEdgeNode = SCNNode(geometry: referenceEdge)
+//                
+//                print("rotation = \(referenceEdgeNode.rotation)")
+//                let rad = atan2(distanceVector.y, distanceVector.x)
+//                referenceEdgeNode.eulerAngles.z = rad
+//                referenceEdgeNode.eulerAngles.x = -.pi / 2
+//                node.addChildNode(referenceEdgeNode)
+//            }
+
         }
         
-        DispatchQueue.main.async {
-            let imageName = referenceImage.name ?? ""
-            self.statusViewController.cancelAllScheduledMessages()
-            self.statusViewController.showMessage("Detected image “\(imageName)”")
-        }
     }
 
     var imageHighlightAction: SCNAction {

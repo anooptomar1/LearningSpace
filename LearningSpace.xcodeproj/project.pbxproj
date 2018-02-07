@@ -12,6 +12,8 @@
 		3929C4911E89EC2C00E00B60 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 3929C48F1E89EC2C00E00B60 /* Main.storyboard */; };
 		3929C4931E89EC2C00E00B60 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 3929C4921E89EC2C00E00B60 /* Assets.xcassets */; };
 		39D8DC1B1E8ADAE600386B05 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 39D8DC1A1E8ADAE600386B05 /* LaunchScreen.storyboard */; };
+		C1A49B6C2029111E0033ECA7 /* ReferenceNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A49B6B2029111E0033ECA7 /* ReferenceNode.swift */; };
+		C1A49B6E202A5AE60033ECA7 /* Utilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1A49B6D202A5AE60033ECA7 /* Utilities.swift */; };
 		C1C865CB2025231F00F8E026 /* SCNVector3.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C865CA2025231F00F8E026 /* SCNVector3.swift */; };
 		C1C865CD2028DA5E00F8E026 /* Plane.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1C865CC2028DA5E00F8E026 /* Plane.swift */; };
 		C41366B91EB80DD400EC054A /* StatusViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = C41366B81EB80DD400EC054A /* StatusViewController.swift */; };
@@ -29,6 +31,8 @@
 		39D8DC1A1E8ADAE600386B05 /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = LaunchScreen.storyboard; sourceTree = "<group>"; };
 		4256BB704256B67000000001 /* LICENSE.txt */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text; path = LICENSE.txt; sourceTree = "<group>"; };
 		426C5AC0426C58E000000001 /* SampleCode.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; name = SampleCode.xcconfig; path = Configuration/SampleCode.xcconfig; sourceTree = "<group>"; };
+		C1A49B6B2029111E0033ECA7 /* ReferenceNode.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReferenceNode.swift; sourceTree = "<group>"; };
+		C1A49B6D202A5AE60033ECA7 /* Utilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Utilities.swift; sourceTree = "<group>"; };
 		C1C865CA2025231F00F8E026 /* SCNVector3.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SCNVector3.swift; sourceTree = "<group>"; };
 		C1C865CC2028DA5E00F8E026 /* Plane.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Plane.swift; sourceTree = "<group>"; };
 		C41366B81EB80DD400EC054A /* StatusViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusViewController.swift; sourceTree = "<group>"; };
@@ -94,6 +98,8 @@
 				1488324C1EFC3ED00043E0AB /* Resources */,
 				C1C865CA2025231F00F8E026 /* SCNVector3.swift */,
 				C1C865CC2028DA5E00F8E026 /* Plane.swift */,
+				C1A49B6B2029111E0033ECA7 /* ReferenceNode.swift */,
+				C1A49B6D202A5AE60033ECA7 /* Utilities.swift */,
 			);
 			path = LearningSpace;
 			sourceTree = "<group>";
@@ -191,8 +197,10 @@
 				3929C48E1E89EC2C00E00B60 /* ViewController.swift in Sources */,
 				C1C865CB2025231F00F8E026 /* SCNVector3.swift in Sources */,
 				C41366B91EB80DD400EC054A /* StatusViewController.swift in Sources */,
+				C1A49B6C2029111E0033ECA7 /* ReferenceNode.swift in Sources */,
 				C8C12A711F29277B00B011FE /* ViewController+ARSessionDelegate.swift in Sources */,
 				C1C865CD2028DA5E00F8E026 /* Plane.swift in Sources */,
+				C1A49B6E202A5AE60033ECA7 /* Utilities.swift in Sources */,
 				3929C48C1E89EC2C00E00B60 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

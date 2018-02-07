@@ -10,8 +10,8 @@ import Foundation
 import ARKit
 
 class Plane: SCNNode {
-    let anchor: ARPlaneAnchor!
-    let planeGeometry: SCNPlane!
+    let anchor: ARPlaneAnchor
+    let planeGeometry: SCNPlane
     
     init(anchor: ARPlaneAnchor) {
         self.anchor = anchor
