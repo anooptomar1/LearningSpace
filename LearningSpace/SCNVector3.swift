@@ -1,6 +1,6 @@
 //
 //  SCNVector3.swift
-//  ARKitImageRecognition
+//  LearningSpace
 //
 //  Created by Pete Schwamb on 2/2/18.
 //  Copyright © 2018 The Wildflower Foundation. All rights reserved.
