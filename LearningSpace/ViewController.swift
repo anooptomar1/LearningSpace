@@ -29,8 +29,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     var floorPlane: Plane?
     let minFloorSize = CGFloat(1.0)
     
-    // Boundaries
-    var wall1: SCNNode?
+    // Visualization of coordinate system
+    var coordinateSystemPreview: SCNNode!
     
     /// The view controller that displays the status and "restart experience" UI.
     lazy var statusViewController: StatusViewController = {
@@ -53,6 +53,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         
         sceneView.delegate = self
         sceneView.session.delegate = self
+        
+        coordinateSystemPreview = SCNNode()
+        sceneView.scene.rootNode.addChildNode(coordinateSystemPreview)
         
         sceneView.debugOptions = [ARSCNDebugOptions.showWorldOrigin, ARSCNDebugOptions.showFeaturePoints]
 
@@ -134,10 +137,12 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             }
             floorPlane = plane
         }
-        
-        if let floorPlane = floorPlane, floorPlane.anchor.identifier == anchor.identifier {
-            for (_, referenceNode) in referenceNodes {
-                referenceNode.adjustOntoPlaneAnchor(anchor, using: node)
+        updateQueue.async {
+            if let floorPlane = self.floorPlane, floorPlane.anchor.identifier == anchor.identifier {
+                for (_, referenceNode) in self.referenceNodes {
+                    referenceNode.adjustOntoPlaneAnchor(anchor, using: node)
+                }
+                self.updateClassroomBounds(scene: self.sceneView.scene)
             }
         }
     }
@@ -216,18 +221,39 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     }
     
     func updateClassroomBounds(scene: SCNScene) {
-        guard wall1 == nil else { return }
+        // Clear out old nodes
+        coordinateSystemPreview.enumerateChildNodes { (node, stop) in
+            node.removeFromParentNode()
+        }
         
-        guard let wall1reference1 = referenceNodes[.wall1point1] else { return }
-        guard let wall1reference2 = referenceNodes[.wall1point2] else { return }
-        guard let wall2reference1 = referenceNodes[.wall2point1] else { return }
-        
-        let translate = SCNMatrix4MakeTranslation(0, -1, 0)
-        self.session.setWorldOrigin(relativeTransform: simd_float4x4(translate))
-        
-        wall1 = CylinderLine(v1: wall1reference1.worldPosition, v2: wall1reference2.worldPosition, radius: 0.01, radSegmentCount: 5, color: UIColor.cyan)
-        scene.rootNode.addChildNode(wall1!)
+        guard let floorPlane = floorPlane,
+              let wall1reference1 = referenceNodes[.wall1point1],
+              let wall1reference2 = referenceNodes[.wall1point2],
+              let wall2reference1 = referenceNodes[.wall2point1] else
+        {
+                return
+        }
 
+        let p1 = floorPlane.convertPosition(wall1reference1.position, from: wall1reference1.parent)
+        let p2 = floorPlane.convertPosition(wall1reference2.position, from: wall1reference2.parent)
+        let p3 = floorPlane.convertPosition(wall2reference1.position, from: wall2reference1.parent)
+        
+        let v1 = p2 - p1
+        let v2 = p3 - p1
+        let vOrigin = v2.project(onto: v1)
+        
+        let origin = floorPlane.convertPosition(vOrigin+p1, to: scene.rootNode)
+        //let origin = floorPlane.convertPosition(p2, to: scene.rootNode)
+        print("origin = \(origin)")
+        
+
+        //let translate = SCNMatrix4MakeTranslation(0, -1, 0)
+        //self.session.setWorldOrigin(relativeTransform: simd_float4x4(translate))
+        
+        let wall1 = CylinderLine(v1: wall1reference1.worldPosition, v2: wall1reference2.worldPosition, radius: 0.01, radSegmentCount: 5, color: UIColor.cyan)
+        coordinateSystemPreview.addChildNode(wall1)
+        let wall2 = CylinderLine(v1: wall2reference1.worldPosition, v2: origin, radius: 0.01, radSegmentCount: 5, color: UIColor.blue)
+        coordinateSystemPreview.addChildNode(wall2)
     }
 
     var imageHighlightAction: SCNAction {
