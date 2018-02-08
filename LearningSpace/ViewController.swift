@@ -27,7 +27,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     
     // floorPlane
     var floorPlane: Plane?
-    let minFloorSize = CGFloat(5.0)
+    let minFloorSize = CGFloat(1.0)
+    
+    // Boundaries
+    var wall1: SCNNode?
     
     /// The view controller that displays the status and "restart experience" UI.
     lazy var statusViewController: StatusViewController = {
@@ -199,6 +202,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 self.referenceNodes[referenceType] = referenceNode
                 scene.rootNode.addChildNode(referenceNode)
                 referenceNode.adjustOntoPlaneAnchor(floorPlane.anchor, using: floorPlane)
+                self.updateClassroomBounds(scene: scene)
             }
             DispatchQueue.main.async {
                 let imageName = anchor.referenceImage.name ?? ""
@@ -206,21 +210,24 @@ class ViewController: UIViewController, ARSCNViewDelegate {
                 self.statusViewController.showMessage("Detected image “\(imageName)”")
             }
 
-//            if self.referenceNodes.count == 2 {
-//                let distanceVector = self.referenceNodes[0].presentation.worldPosition - self.referenceNodes[1].presentation.worldPosition
-//                let distance = distanceVector.length()
-//                let referenceEdge = SCNCylinder(radius: 0.01, height: distance)
-//                let referenceEdgeNode = SCNNode(geometry: referenceEdge)
-//                
-//                print("rotation = \(referenceEdgeNode.rotation)")
-//                let rad = atan2(distanceVector.y, distanceVector.x)
-//                referenceEdgeNode.eulerAngles.z = rad
-//                referenceEdgeNode.eulerAngles.x = -.pi / 2
-//                node.addChildNode(referenceEdgeNode)
-//            }
 
         }
         
+    }
+    
+    func updateClassroomBounds(scene: SCNScene) {
+        guard wall1 == nil else { return }
+        
+        guard let wall1reference1 = referenceNodes[.wall1point1] else { return }
+        guard let wall1reference2 = referenceNodes[.wall1point2] else { return }
+        guard let wall2reference1 = referenceNodes[.wall2point1] else { return }
+        
+        let translate = SCNMatrix4MakeTranslation(0, -1, 0)
+        self.session.setWorldOrigin(relativeTransform: simd_float4x4(translate))
+        
+        wall1 = CylinderLine(v1: wall1reference1.worldPosition, v2: wall1reference2.worldPosition, radius: 0.01, radSegmentCount: 5, color: UIColor.cyan)
+        scene.rootNode.addChildNode(wall1!)
+
     }
 
     var imageHighlightAction: SCNAction {
