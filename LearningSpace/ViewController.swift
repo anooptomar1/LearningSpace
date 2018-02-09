@@ -243,15 +243,15 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
         let csOriginInFloorCoords = v2.project(onto: v1) + p1
         let csOriginInWorldCoords = floorPlane.convertPosition(csOriginInFloorCoords, to: scene.rootNode)
-        print("csOriginInFloorCoords = \(csOriginInFloorCoords)")
-        print("csOriginInWorldCoords = \(csOriginInWorldCoords)")
+//        print("csOriginInFloorCoords = \(csOriginInFloorCoords)")
+//        print("csOriginInWorldCoords = \(csOriginInWorldCoords)")
 
         let classroomRootNode = SCNNode();
         coordinateSystemPreview.addChildNode(classroomRootNode)
         
         // Determine rotation of coordinate system wrt floor plane
         let xAxisVector = p1 - csOriginInFloorCoords
-        print("xAxisVector = \(xAxisVector)")
+//        print("xAxisVector = \(xAxisVector)")
         let flip = xAxisVector.z < 0 ? 1 : -1
         let rotationAdd = Float(flip) * Float.pi / 2
         let csRotation = SCNMatrix4MakeRotation(atan(xAxisVector.x / xAxisVector.z) + rotationAdd, 0, 1, 0)
@@ -261,8 +261,6 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
         classroomRootNode.position = csOriginInWorldCoords
         classroomRootNode.transform = csRotation * classroomRootNode.transform
-        
-        
 
         // Add a plane to show orientation of our classroom coordinate space
         let csPlane = SCNPlane(width: 1, height: 1)
@@ -284,11 +282,10 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         csPlaneZMarkerNode.position = SCNVector3Make(0, 0, 0.5)
         classroomRootNode.addChildNode(csPlaneZMarkerNode)
 
-        for (_, node) in referenceNodes {
-            let pos = classroomRootNode.convertPosition(node.position, from: node.parent)
-            print("\(node.referenceImage.name) is at \(pos)")
-        }
-
+//        for (_, node) in referenceNodes {
+//            let pos = classroomRootNode.convertPosition(node.position, from: node.parent)
+//            print("\(node.referenceImage.name) is at \(pos)")
+//        }
 
         //let translate = SCNMatrix4MakeTranslation(0, -1, 0)
         //self.session.setWorldOrigin(relativeTransform: simd_float4x4(translate))
