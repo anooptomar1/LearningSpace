@@ -50,36 +50,9 @@ class ReferenceNode: SCNNode {
             print("ReferenceImage \(String(describing: referenceImage.name)) already on plane.")
             return
         }
-        
-        // Add 10% tolerance to the corners of the plane.
-        let tolerance: Float = 0.1
-        
-        let minX: Float = anchor.center.x - anchor.extent.x / 2 - anchor.extent.x * tolerance
-        let maxX: Float = anchor.center.x + anchor.extent.x / 2 + anchor.extent.x * tolerance
-        let minZ: Float = anchor.center.z - anchor.extent.z / 2 - anchor.extent.z * tolerance
-        let maxZ: Float = anchor.center.z + anchor.extent.z / 2 + anchor.extent.z * tolerance
-        
-        guard (minX...maxX).contains(planePosition.x) && (minZ...maxZ).contains(planePosition.z) else {
-            return
-        }
-        
-        // Move onto the plane if it is near it (within 20 centimeters).
-        let verticalAllowance: Float = 0.20
-        let epsilon: Float = 0.001 // Do not update if the difference is less than 1 mm.
-        let distanceToPlane = abs(planePosition.y)
-        print("ReferenceImage \(String(describing: referenceImage.name)) distance to plane = \(distanceToPlane).")
-        if distanceToPlane > epsilon && distanceToPlane < verticalAllowance {
-//            SCNTransaction.begin()
-//            SCNTransaction.animationDuration = CFTimeInterval(distanceToPlane * 500) // Move 2 mm per second.
-//            SCNTransaction.animationTimingFunction = CAMediaTimingFunction(name: kCAMediaTimingFunctionEaseInEaseOut)
-            position.y = anchor.transform.columns.3.y
-
-            //updateAlignment(to: anchor.alignment, transform: simdWorldTransform, allowAnimation: false)
-//            simdTransform = simdWorldTransform
-//            simdTransform.translation = simdWorldPosition
-//
-//            SCNTransaction.commit()
-        }
+                
+        let newPosition = SCNVector3Make(planePosition.x, 0, planePosition.z)
+        position = node.convertPosition(newPosition, to: parent)
     }
     
     required init(coder aDecoder: NSCoder) {
