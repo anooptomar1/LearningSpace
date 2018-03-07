@@ -11,6 +11,8 @@ import ARKit
 @UIApplicationMain
 class AppDelegate: UIResponder, UIApplicationDelegate {
 	var window: UIWindow?
+    
+    private(set) lazy var deviceManager = DeviceDataManager()
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey : Any]? = nil) -> Bool {
         guard ARWorldTrackingConfiguration.isSupported else {
@@ -24,6 +26,11 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
                 determine whether to show UI for launching AR experiences.
             """) // For details, see https://developer.apple.com/documentation/arkit
         }
+        
+        if  let arVC = window?.rootViewController as? ARViewController {
+            arVC.deviceManager = deviceManager
+        }
+
 
         return true
     }

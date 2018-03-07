@@ -9,7 +9,9 @@ import ARKit
 import SceneKit
 import UIKit
 
-class ViewController: UIViewController, ARSCNViewDelegate {
+class ARViewController: UIViewController, ARSCNViewDelegate {
+    
+    weak var deviceManager: DeviceDataManager!
 
     @IBOutlet var sceneView: ARSCNView!
 
@@ -28,6 +30,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
     // floorPlane
     var floorPlane: Plane?
     let minFloorSize = CGFloat(1.0)
+    var classroomOrigin: SCNNode?
 
     // Visualization of coordinate system
     var coordinateSystemPreview: SCNNode!
@@ -63,6 +66,15 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         statusViewController.restartExperienceHandler = { [unowned self] in
             self.restartExperience()
         }
+        
+        let notificationCenter = NotificationCenter.default
+        
+        notificationCenter.addObserver(forName: .KnockDetected, object: deviceManager, queue: nil) { [unowned self] _ in
+            DispatchQueue.main.async {
+                self.knockDetected()
+            }
+        }
+
     }
 
 	override func viewDidAppear(_ animated: Bool) {
@@ -70,6 +82,9 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 
 		// Prevent the screen from being dimmed to avoid interuppting the AR experience.
 		UIApplication.shared.isIdleTimerDisabled = true
+        
+        // Watch accelerometer for knocks
+        deviceManager.startKnockDetection()
 
         // Start the AR experience
         resetTracking()
@@ -79,6 +94,8 @@ class ViewController: UIViewController, ARSCNViewDelegate {
 		super.viewWillDisappear(animated)
 
         session.pause()
+        
+        deviceManager.stopKnockDetection()
 	}
 
     // MARK: - Session management (Image detection setup)
@@ -261,6 +278,7 @@ class ViewController: UIViewController, ARSCNViewDelegate {
         }
         classroomRootNode.position = csOriginInWorldCoords
         classroomRootNode.transform = csRotation * classroomRootNode.transform
+        classroomOrigin = classroomRootNode
 
         // Add a plane to show orientation of our classroom coordinate space
         let csPlane = SCNPlane(width: 1, height: 1)
@@ -306,4 +324,18 @@ class ViewController: UIViewController, ARSCNViewDelegate {
             .removeFromParentNode()
         ])
     }
+    
+    func knockDetected() {
+        guard let cameraTransform = session.currentFrame?.camera.transform,
+            let classroomOrigin = self.classroomOrigin else {
+            return
+        }
+        
+        let worldPosition = SCNVector3(cameraTransform.translation)
+        let cameraPositionInClassroom = classroomOrigin.convertPosition(worldPosition, to: nil)
+        
+        print("Camera position: \(cameraPositionInClassroom)")
+    }
+    
+
 }
