@@ -11,9 +11,11 @@ import CoreMotion
 
 class DeviceDataManager {
     
-    static let motionUpdateInterval = TimeInterval(0.001)
+    static let motionUpdateInterval = TimeInterval(0.01)
     
     let knockDetectionQueue = OperationQueue()
+    
+    var lastMagnitude: Double = 0
     
     let motionManager: CMMotionManager = {
         let manager = CMMotionManager()
@@ -33,9 +35,12 @@ class DeviceDataManager {
                 let acc = motion.userAcceleration
                 
                 let magnitude = sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z)
+                
+                let jerk = magnitude - self.lastMagnitude
+                self.lastMagnitude = magnitude
 
-                if (magnitude > 0.7) {
-                    print("mag = \(magnitude)")
+                if (jerk < -0.5) {
+                    print("jerk = \(jerk)")
                     NotificationCenter.default.post(name: .KnockDetected, object: self)
                 }
             }

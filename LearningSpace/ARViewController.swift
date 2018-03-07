@@ -16,6 +16,8 @@ class ARViewController: UIViewController, ARSCNViewDelegate {
     @IBOutlet var sceneView: ARSCNView!
 
     @IBOutlet weak var blurView: UIVisualEffectView!
+    
+    @IBOutlet weak var showLocationButton: UIButton!
 
     // reference nodes for coordinate system
     var referenceNodes = [ReferenceType: ReferenceNode]()
@@ -56,6 +58,9 @@ class ARViewController: UIViewController, ARSCNViewDelegate {
 
         sceneView.delegate = self
         sceneView.session.delegate = self
+        
+        showLocationButton.layer.cornerRadius = 10
+        showLocationButton.clipsToBounds = true
 
         coordinateSystemPreview = SCNNode()
         sceneView.scene.rootNode.addChildNode(coordinateSystemPreview)
@@ -71,7 +76,7 @@ class ARViewController: UIViewController, ARSCNViewDelegate {
         
         notificationCenter.addObserver(forName: .KnockDetected, object: deviceManager, queue: nil) { [unowned self] _ in
             DispatchQueue.main.async {
-                self.knockDetected()
+                self.showCameraPosition()
             }
         }
 
@@ -324,18 +329,19 @@ class ARViewController: UIViewController, ARSCNViewDelegate {
             .removeFromParentNode()
         ])
     }
+    @IBAction private func showPositionTapped(_ sender: UIButton) {
+        showCameraPosition()
+    }
     
-    func knockDetected() {
+    private func showCameraPosition() {
         guard let cameraTransform = session.currentFrame?.camera.transform,
             let classroomOrigin = self.classroomOrigin else {
-            return
+                return
         }
         
         let worldPosition = SCNVector3(cameraTransform.translation)
-        let cameraPositionInClassroom = classroomOrigin.convertPosition(worldPosition, to: nil)
-        
-        print("Camera position: \(cameraPositionInClassroom)")
+        let cameraPositionInClassroom = classroomOrigin.convertPosition(worldPosition, from: nil)
+        self.statusViewController.showMessage("Classroom Position: \(cameraPositionInClassroom)");
     }
     
-
 }
