@@ -340,8 +340,11 @@ class ARViewController: UIViewController, ARSCNViewDelegate {
         }
         
         let worldPosition = SCNVector3(cameraTransform.translation)
+        // z -> x, x -> y
+        let xStr = String(format: "%0.02f", -worldPosition.z)
+        let yStr = String(format: "%0.02f", -worldPosition.x)
         let cameraPositionInClassroom = classroomOrigin.convertPosition(worldPosition, from: nil)
-        self.statusViewController.showMessage("Classroom Position: \(cameraPositionInClassroom)");
+        self.statusViewController.showMessage("Classroom Position: \(xStr), \(yStr)");
     }
     
 }
